@@ -1,12 +1,14 @@
 package net.atlassc.ShinChven.colorinpixel;
 
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -54,7 +56,17 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_readme) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("说明");
+            builder.setMessage(R.string.action_readme_text);
+            builder.setPositiveButton("知道了", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+            builder.show();
             return true;
         }
 
@@ -119,8 +131,8 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             Bitmap image = (Bitmap) params[0];
             int color = getResources().getColor(R.color.target);
 
-            for (int i = 0; i < image.getWidth(); i++) {
-                for (int j = 0; j < image.getHeight(); j++) {
+            for (int i = 0; i < image.getWidth(); ) {
+                for (int j = 0; j < image.getHeight(); ) {
                     try {
                         int pixel = image.getPixel(i, j);
                         int alpha = Color.alpha(pixel);
@@ -136,8 +148,10 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+                    j += 2;
 
                 }
+                i += 2;
             }
 
             Log.i("range", "total in range: " + totalInRange);

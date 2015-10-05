@@ -1,6 +1,10 @@
 <resources>
-    <string name="app_name">ColorInPixel</string>
+    <string name="app_name">像素颜色检查器</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="action_readme">说明</string>
+    <string name="action_readme_text">在选择好图片以后，app会对图片的所有像素进行隔行扫描，每个像素的RBG颜色满足目标颜色的正负30
+        之内算作一个吻合，最后累计出找到的所有像素点。
+    </string>
 </resources>
