@@ -1,4 +1,4 @@
-package net.atlassc.ShinChven.colorinpixel;
+package net.atlassc.ShinChven.colorinpixel.util;
 
 import android.content.Context;
 import android.content.res.Resources;

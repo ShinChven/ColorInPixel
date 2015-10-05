@@ -1,26 +1,40 @@
 package net.atlassc.ShinChven.colorinpixel;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ImageView;
+import android.widget.TextView;
+import net.atlassc.ShinChven.colorinpixel.util.BitmapTool;
+import net.atlassc.ShinChven.colorinpixel.util.ToastUtil;
+
+import java.io.IOException;
 
 
-public class MainActivity extends ActionBarActivity implements OnClickListener {
+public class MainActivity extends AppCompatActivity implements OnClickListener {
 
+
+    private static final int SELECT_IMAGE = 92;
+    private ImageView mPreview;
+    private TextView mResult;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mPreview = (ImageView) findViewById(R.id.preview);
 
+        mResult = ((TextView) findViewById(R.id.result));
 
     }
 
@@ -49,46 +63,99 @@ public class MainActivity extends ActionBarActivity implements OnClickListener {
 
     @Override
     public void onClick(View v) {
-        final ProgressDialog progress = new ProgressDialog(this);
-        progress.show();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+        int id = v.getId();
+        if (id == R.id.select_image) {
+            Intent intt = new Intent(Intent.ACTION_GET_CONTENT);
+            intt.setType("image/*");
+            startActivityForResult(Intent.createChooser(intt, "Select your image from..."), SELECT_IMAGE);
+        }
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SELECT_IMAGE) {
+            if (resultCode == RESULT_OK) {
+                Uri uri;
                 try {
-                    Bitmap bitmap = BitmapFactory.decodeFile("/storage/emulated/0/Download/a.jpg");
-                    int color = getResources().getColor(R.color.target);
-                    int totalInRange = 0;
-                    for (int i = 0; i < bitmap.getWidth(); i++) {
-                        for (int j = 0; j < bitmap.getHeight(); j++) {
-                            int pixel = bitmap.getPixel(i, j);
-                            int alpha = Color.alpha(pixel);
-                            int red = Color.red(pixel);
-                            int green = Color.green(pixel);
-                            int blue = Color.blue(pixel);
-                            Log.i("range", "a:" + alpha + " r:" + red + " g:" + green + " b:" + blue);
-
-                            if (isInRage(Color.red(color),red)&&isInRage(Color.green(color),green)&&isInRage(Color.blue
-                                    (color),blue)) {
-                                totalInRange++;
-                            }
-
-                        }
-                    }
-
-                    Log.i("range", "total in range: "+totalInRange);
-
-
+                    uri = data.getData();
                 } catch (Exception e) {
                     e.printStackTrace();
-                } finally {
-                    progress.dismiss();
+                    ToastUtil.toastShortly(this, "没得选择任何图片。");
+                    return;
                 }
-
-
+                if (data != null && uri != null) {
+                    try {
+                        Bitmap resized = BitmapTool.resize(this, uri, 1000, 1000);
+                        mPreview.setImageBitmap(resized);
+                        new PixelCheckTask().execute(resized);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-        }).run();
+        }
 
 
+    }
+
+    public class PixelCheckTask extends AsyncTask {
+
+        private ProgressDialog mProgress;
+        int totalInRange = 0;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mProgress = new ProgressDialog(MainActivity.this);
+            mProgress.setMessage("正在检查图片……");
+            mProgress.setCancelable(false);
+            mProgress.show();
+        }
+
+        @Override
+        protected Object doInBackground(Object[] params) {
+            Bitmap image = (Bitmap) params[0];
+            int color = getResources().getColor(R.color.target);
+
+            for (int i = 0; i < image.getWidth(); i++) {
+                for (int j = 0; j < image.getHeight(); j++) {
+                    try {
+                        int pixel = image.getPixel(i, j);
+                        int alpha = Color.alpha(pixel);
+                        int red = Color.red(pixel);
+                        int green = Color.green(pixel);
+                        int blue = Color.blue(pixel);
+                        Log.i("range", "a:" + alpha + " r:" + red + " g:" + green + " b:" + blue);
+
+                        if (isInRage(Color.red(color), red) && isInRage(Color.green(color), green) && isInRage(Color.blue
+                                (color), blue)) {
+                            totalInRange++;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+
+            Log.i("range", "total in range: " + totalInRange);
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            try {
+                mProgress.dismiss();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            mResult.setText("一共找到：" + totalInRange + "个像素");
+
+            super.onPostExecute(o);
+        }
     }
 
 
